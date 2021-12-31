@@ -53,7 +53,7 @@ if !exists("b:fortran_fixed_source")
   elseif exists("fortran_fixed_source")
     " User guarantees fixed source form for all fortran files
     let b:fortran_fixed_source = 1
-  elseif expand("%:e") =~? '^f\%(90\|95\|03\|08\)$'
+  elseif expand("%:e") =~? '^f\%(90\|95\|03\|08|ypp\)$'
     " Free-form file extension defaults as in Intel ifort, gcc(gfortran), NAG, Pathscale, and Cray compilers
     let b:fortran_fixed_source = 0
   elseif expand("%:e") =~? '^\%(f\|f77\|for\)$'
@@ -149,8 +149,9 @@ syn keyword fortranExtraIntrinsic	algama cdabs cdcos cdexp cdlog cdsin cdsqrt cq
 
 syn keyword fortranIntrinsic	abs acos aimag aint anint asin atan atan2 char cmplx conjg cos cosh exp ichar index int log log10 max min nint sign sin sinh sqrt tan tanh
 syn match fortranIntrinsic	"\<len\s*[(,]"me=s+3
-syn match fortranIntrinsic	"\<real\s*("me=s+4
 syn match fortranIntrinsic	"\<logical\s*("me=s+7
+syn match fortranIntrinsic	"\<real\s*("me=s+4
+syn match fortranType           "^\s*\<real\>"
 syn match fortranType           "\<implicit\s\+real\>"
 syn match fortranType           "\<implicit\s\+logical\>"
 
@@ -204,7 +205,8 @@ syn match fortranKeywordDel  	"\<go\s*to\ze\s\+.*,\s*(.*$"
 syn match fortranKeywordOb  	"\<go\s*to\ze\s*(\d\+.*$"
 syn region fortranStringR	start=+'+ end=+'+ contains=fortranContinueMark,fortranLeftMargin,fortranSerialNumber
 syn keyword fortranIntrinsicR	dim lge lgt lle llt mod
-syn keyword fortranKeywordDel	assign pause
+syn match fortranKeywordDel	"\<assign\s*\d\+\s*to"me=s+6
+syn keyword fortranKeywordDel	pause
 
 syn match fortranType           "\<type\>"
 syn keyword fortranType	        none
@@ -218,7 +220,9 @@ syn match fortranStorageClass	"\<len\s*="me=s+3
 syn match fortranUnitHeader	"\<module\>"
 syn match fortranUnitHeader	"\<submodule\>"
 syn keyword fortranUnitHeader	use only contains
-syn keyword fortranUnitHeader	result operator assignment
+syn keyword fortranUnitHeader	result
+syn match fortranUnitHeader	"\<operator\s*(.\+)"me=s+8
+syn match fortranUnitHeader	"\<assignment\s*(=)"me=s+10
 syn match fortranUnitHeader	"\<interface\>"
 syn keyword fortranKeyword	allocate deallocate nullify cycle exit
 syn match fortranConditional	"\<select\>"
@@ -263,7 +267,7 @@ syn match   fortranConditional	"\<end\s*if"
 syn match   fortranIO		contains=fortranOperator "\<e\(nd\|rr\)\s*=\s*\d\+"
 syn match   fortranConditional	"\<else\s*if"
 
-syn keyword fortranUnitHeaderOb	entry
+syn match fortranUnitHeaderOb	"\<entry\s*[a-zA-Z]"me=s+5
 syn match fortranTypeR		display "double\s\+precision"
 syn match fortranTypeR		display "double\s\+complex"
 syn match fortranUnitHeaderR	display "block\s\+data"
@@ -292,7 +296,9 @@ if b:fortran_dialect == "f08"
   syn keyword fortranIntrinsic        iso_c_binding c_loc c_funloc c_associated  c_f_pointer c_f_procpointer
   syn keyword fortranType             c_ptr c_funptr
   " ISO_Fortran_env
-  syn keyword fortranConstant         iso_fortran_env character_storage_size error_unit file_storage_size input_unit iostat_end iostat_eor numeric_storage_size output_unit
+  syn keyword fortranConstant         character_storage_size error_unit file_storage_size input_unit iostat_end iostat_eor numeric_storage_size output_unit
+  syn keyword fortranConstant         atomic_int_kind atomic_logical_kind character_kinds integer_kinds int8 int16 int32 int64 int64 logical_kinds real_kinds real32 real64 real128 stat_locked stat_unlocked stat_locked_other_image stat_stopped_image
+  syn keyword fortranIntrinsic        iso_fortran_env
   " IEEE_arithmetic
   syn keyword fortranIntrinsic        ieee_arithmetic ieee_support_underflow_control ieee_get_underflow_mode ieee_set_underflow_mode
 
@@ -382,6 +388,10 @@ endif
 
 syn match fortranComment	excludenl "!.*$" contains=@fortranCommentGroup,@spell
 syn match fortranOpenMP		excludenl 		"^\s*!\$\(OMP\)\=&\=\s.*$"
+syn match fortranOpenACC	excludenl 		"^\s*!\$\(ACC\)\=&\=\s.*$"
+
+" fypp preprocessor
+syn match	cPreProc		"^\s*#:.*"
 
 "cpp is often used with Fortran
 syn match	cPreProc		"^\s*#\s*\(define\|ifdef\)\>.*"
@@ -538,6 +548,7 @@ hi def link cInclude		Include
 hi def link cPreProc		PreProc
 hi def link cPreCondit		PreCondit
 hi def link fortranOpenMP       PreProc
+hi def link fortranOpenACC      PreProc
 hi def link fortranParenError	Error
 hi def link fortranComment	Comment
 hi def link fortranSerialNumber	Todo
